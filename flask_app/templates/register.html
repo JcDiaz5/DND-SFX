@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <h1>Create account</h1>
+    <form id="register-form">
+        <div class="form-group">
+            <label for="first_name">First name</label>
+            <input type="text" id="first_name" name="first_name" autocomplete="given-name" required placeholder="First name">
+        </div>
+        <div class="form-group">
+            <label for="last_name">Last name</label>
+            <input type="text" id="last_name" name="last_name" autocomplete="family-name" required placeholder="Last name">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" required placeholder="Email">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="new-password" required placeholder="At least 8 characters, upper, lower, number">
+        </div>
+        <p class="form-error" id="form-error" hidden></p>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Sign up</button>
+        </div>
+    </form>
+    <footer>
+        Already have an account? <a href="{{ url_for('main_bp.login_page') }}">Log in</a>
+    </footer>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function() {
+    var form = document.getElementById('register-form');
+    var err = document.getElementById('form-error');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        err.hidden = true;
+        fetch('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                first_name: document.getElementById('first_name').value.trim(),
+                last_name: document.getElementById('last_name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value
+            })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(_) {
+            if (_.ok) window.location.href = '/';
+            else { err.textContent = _.data.error || 'Registration failed'; err.hidden = false; }
+        })
+        .catch(function() { err.textContent = 'Network error'; err.hidden = false; });
+    });
+})();
+</script>
+{% endblock %}

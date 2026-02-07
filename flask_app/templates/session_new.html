@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}New session list{% endblock %}
+{% block content %}
+<div class="session-new-page">
+    <h1 class="page-title">New session list</h1>
+    <div class="auth-page session-new-form">
+        <h2 class="session-new-form-title">Create a session list</h2>
+        <p class="session-new-form-intro">Name your list, then add sounds from Browse. Log in to save lists permanently; guests get a temporary list until the tab is closed.</p>
+        <div class="form-group">
+            <label for="new-list-name">List name</label>
+            <input type="text" id="new-list-name" placeholder="e.g. Tonight's session" required>
+        </div>
+        <p class="form-error" id="new-list-error" hidden></p>
+        <div class="form-actions">
+            <button type="button" class="btn btn-primary" id="new-list-submit">Create</button>
+        </div>
+    </div>
+    <p class="session-new-back"><a href="{{ url_for('main_bp.session_index') }}">← Back to session lists</a></p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/guest_lists.js') }}"></script>
+<script src="{{ url_for('static', filename='js/session_new.js') }}"></script>
+{% endblock %}

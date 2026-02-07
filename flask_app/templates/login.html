@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <h1>Log in</h1>
+    <form id="login-form">
+        <div class="form-group">
+            <label for="email">Email or username</label>
+            <input type="text" id="email" name="email" autocomplete="username" required placeholder="Email or username">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Password">
+        </div>
+        <div class="form-group">
+            <label><input type="checkbox" id="remember" name="remember"> Remember me</label>
+        </div>
+        <p class="form-error" id="form-error" hidden></p>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </div>
+    </form>
+    <footer>
+        Don't have an account? <a href="{{ url_for('main_bp.register_page') }}">Sign up</a>
+    </footer>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function() {
+    var form = document.getElementById('login-form');
+    var err = document.getElementById('form-error');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        err.hidden = true;
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                remember: document.getElementById('remember').checked
+            })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(_) {
+            if (_.ok) {
+                var params = new URLSearchParams(window.location.search);
+                var next = params.get('next') || '/';
+                window.location.href = next.startsWith('/') ? next : '/';
+            } else { err.textContent = _.data.error || 'Login failed'; err.hidden = false; }
+        })
+        .catch(function() { err.textContent = 'Network error'; err.hidden = false; });
+    });
+})();
+</script>
+{% endblock %}

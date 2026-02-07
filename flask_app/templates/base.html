@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}D&D SFX{% endblock %} | D&D Sound Effects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="{{ url_for('main_bp.index') }}" class="logo">D&D SFX</a>
+            <nav class="nav-main" aria-label="Main">
+                <a href="{{ url_for('main_bp.browse') }}">Browse Sounds</a>
+                <a href="{{ url_for('main_bp.session_index') }}">Session List</a>
+                {% if current_user.is_authenticated %}
+                    <div id="user-menu" class="user-menu">
+                        <button type="button" id="user-menu-button" class="user-menu-button" aria-label="User menu" aria-expanded="false">
+                            <span id="user-display-name">{{ (current_user.first_name or current_user.username or current_user.email or 'User')|e }}</span>
+                            <span class="user-menu-chevron" aria-hidden="true">▼</span>
+                        </button>
+                        <div id="user-dropdown" class="user-dropdown" role="menu">
+                            <a href="{{ url_for('main_bp.profile_page') }}" class="user-dropdown-item" role="menuitem">View &amp; Edit Profile</a>
+                            <div class="user-dropdown-divider"></div>
+                            <button type="button" id="logout-btn" class="user-dropdown-item user-dropdown-item-button" role="menuitem">Log out</button>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('main_bp.login_page') }}">Log in</a>
+                    <a href="{{ url_for('main_bp.register_page') }}" class="btn btn-primary">Sign up</a>
+                {% endif %}
+            </nav>
+            <button type="button" class="nav-toggle" aria-label="Open menu" id="nav-toggle">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile nav panel (outside header so it is not affected by header's backdrop-filter) -->
+    <div id="mobile-nav-panel" class="mobile-nav-panel" aria-hidden="true">
+        <nav class="mobile-nav-panel-inner" aria-label="Main">
+            <a href="{{ url_for('main_bp.browse') }}">Browse Sounds</a>
+            <a href="{{ url_for('main_bp.session_index') }}">Session List</a>
+            {% if current_user.is_authenticated %}
+                <div class="user-menu">
+                    <button type="button" class="user-menu-button mobile-user-menu-btn" aria-label="User menu" aria-expanded="false">
+                        <span class="mobile-user-name">{{ (current_user.first_name or current_user.username or current_user.email or 'User')|e }}</span>
+                        <span class="user-menu-chevron" aria-hidden="true">▼</span>
+                    </button>
+                    <div class="user-dropdown mobile-user-dropdown" role="menu">
+                        <a href="{{ url_for('main_bp.profile_page') }}" class="user-dropdown-item" role="menuitem">View &amp; Edit Profile</a>
+                        <div class="user-dropdown-divider"></div>
+                        <button type="button" class="user-dropdown-item user-dropdown-item-button mobile-logout-btn" role="menuitem">Log out</button>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('main_bp.login_page') }}">Log in</a>
+                <a href="{{ url_for('main_bp.register_page') }}" class="btn btn-primary">Sign up</a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <p>D&D SFX — Sound effects for your tabletop sessions.</p>
+    </footer>
+
+    <!-- App-styled modals (replace browser prompt/confirm/alert) -->
+    <div id="app-prompt-modal" class="modal-overlay" hidden aria-hidden="true">
+        <div class="modal-content">
+            <h2 class="modal-title" id="app-prompt-title">Edit name</h2>
+            <input type="text" id="app-prompt-input" class="modal-input" aria-label="Name" autocomplete="off" />
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="app-prompt-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="app-prompt-ok">OK</button>
+            </div>
+        </div>
+    </div>
+    <div id="app-confirm-modal" class="modal-overlay" hidden aria-hidden="true">
+        <div class="modal-content">
+            <h2 class="modal-title" id="app-confirm-title">Confirm</h2>
+            <p class="modal-body" id="app-confirm-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" id="app-confirm-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="app-confirm-ok">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <div id="app-alert-modal" class="modal-overlay" hidden aria-hidden="true">
+        <div class="modal-content">
+            <p class="modal-body" id="app-alert-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" id="app-alert-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popover for sounds with multiple variants (click elsewhere to close) -->
+    <div id="sound-variant-popover" class="sound-variant-popover" hidden aria-hidden="true">
+        <div class="sound-variant-popover-inner" id="sound-variant-popover-inner"></div>
+    </div>
+
+    <script>
+        (function() {
+            var promptModal = document.getElementById('app-prompt-modal');
+            var promptTitle = document.getElementById('app-prompt-title');
+            var promptInput = document.getElementById('app-prompt-input');
+            var promptCancel = document.getElementById('app-prompt-cancel');
+            var promptOk = document.getElementById('app-prompt-ok');
+            var confirmModal = document.getElementById('app-confirm-modal');
+            var confirmTitle = document.getElementById('app-confirm-title');
+            var confirmMessage = document.getElementById('app-confirm-message');
+            var confirmCancel = document.getElementById('app-confirm-cancel');
+            var confirmOk = document.getElementById('app-confirm-ok');
+            var alertModal = document.getElementById('app-alert-modal');
+            var alertMessage = document.getElementById('app-alert-message');
+            var alertOk = document.getElementById('app-alert-ok');
+
+            function showModal(overlay) {
+                overlay.hidden = false;
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+            function hideModal(overlay) {
+                overlay.hidden = true;
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+
+            window.appPrompt = function(options) {
+                return new Promise(function(resolve) {
+                    if (!promptModal || !promptInput) { resolve(null); return; }
+                    var title = (options && options.title) || 'Edit name';
+                    var value = (options && options.value != null) ? String(options.value) : '';
+                    promptTitle.textContent = title;
+                    promptInput.value = value;
+                    promptInput.placeholder = (options && options.placeholder) || '';
+                    showModal(promptModal);
+                    promptInput.focus();
+                    promptInput.select && promptInput.select();
+
+                    function done(result) {
+                        hideModal(promptModal);
+                        promptModal.removeEventListener('keydown', onKey);
+                        promptCancel.removeEventListener('click', onCancel);
+                        promptOk.removeEventListener('click', onOk);
+                        resolve(result);
+                    }
+                    function onKey(e) {
+                        if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+                        if (e.key === 'Enter') { e.preventDefault(); onOk(); }
+                    }
+                    function onCancel() { done(null); }
+                    function onOk() { done(promptInput.value); }
+
+                    promptModal.addEventListener('keydown', onKey);
+                    promptCancel.addEventListener('click', onCancel);
+                    promptOk.addEventListener('click', onOk);
+                });
+            };
+
+            window.appConfirm = function(options) {
+                return new Promise(function(resolve) {
+                    if (!confirmModal) { resolve(false); return; }
+                    var title = (options && options.title) || 'Confirm';
+                    var message = (options && options.message) || 'Are you sure?';
+                    var okLabel = (options && options.confirmLabel) || 'Confirm';
+                    var cancelLabel = (options && options.cancelLabel) || 'Cancel';
+                    confirmTitle.textContent = title;
+                    confirmMessage.textContent = message;
+                    confirmOk.textContent = okLabel;
+                    confirmCancel.textContent = cancelLabel;
+                    showModal(confirmModal);
+                    confirmOk.focus();
+
+                    function done(ok) {
+                        hideModal(confirmModal);
+                        confirmModal.removeEventListener('keydown', onKey);
+                        confirmCancel.removeEventListener('click', onCancel);
+                        confirmOk.removeEventListener('click', onOk);
+                        resolve(ok);
+                    }
+                    function onKey(e) {
+                        if (e.key === 'Escape') { e.preventDefault(); done(false); }
+                    }
+                    function onCancel() { done(false); }
+                    function onOk() { done(true); }
+
+                    confirmModal.addEventListener('keydown', onKey);
+                    confirmCancel.addEventListener('click', onCancel);
+                    confirmOk.addEventListener('click', onOk);
+                });
+            };
+
+            window.appAlert = function(message) {
+                return new Promise(function(resolve) {
+                    if (!alertModal) { resolve(); return; }
+                    alertMessage.textContent = message || '';
+                    showModal(alertModal);
+                    alertOk.focus();
+
+                    function done() {
+                        hideModal(alertModal);
+                        alertModal.removeEventListener('keydown', onKey);
+                        alertOk.removeEventListener('click', onOk);
+                        resolve();
+                    }
+                    function onKey(e) {
+                        if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); done(); }
+                    }
+                    function onOk() { done(); }
+
+                    alertModal.addEventListener('keydown', onKey);
+                    alertOk.addEventListener('click', onOk);
+                });
+            };
+        })();
+    </script>
+    <script>
+        (function() {
+            var navToggle = document.getElementById('nav-toggle');
+            var mobilePanel = document.getElementById('mobile-nav-panel');
+            navToggle?.addEventListener('click', function() {
+                document.body.classList.toggle('nav-open');
+                if (mobilePanel) mobilePanel.setAttribute('aria-hidden', document.body.classList.contains('nav-open') ? 'false' : 'true');
+            });
+
+            function setupUserMenu(menuEl, btnEl, dropdownEl, logoutBtnEl) {
+                if (!btnEl || !dropdownEl) return;
+                btnEl.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var isOpen = dropdownEl.classList.contains('active');
+                    dropdownEl.classList.toggle('active', !isOpen);
+                    btnEl.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+                });
+                document.addEventListener('click', function(e) {
+                    if (menuEl && !menuEl.contains(e.target)) {
+                        dropdownEl.classList.remove('active');
+                        btnEl.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                if (logoutBtnEl) {
+                    logoutBtnEl.addEventListener('click', function() {
+                        fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' })
+                            .then(function() { window.location.href = '/'; });
+                    });
+                }
+            }
+            setupUserMenu(document.getElementById('user-menu'), document.getElementById('user-menu-button'), document.getElementById('user-dropdown'), document.getElementById('logout-btn'));
+            setupUserMenu(document.querySelector('.mobile-nav-panel .user-menu'), document.querySelector('.mobile-user-menu-btn'), document.querySelector('.mobile-user-dropdown'), document.querySelector('.mobile-logout-btn'));
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

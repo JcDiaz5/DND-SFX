@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Browse Sounds{% endblock %}
+{% block content %}
+<div class="browse-layout" id="browse-layout">
+    <div class="browse-main">
+        <h1 class="page-title">Browse Sounds</h1>
+        <div class="browse-toolbar">
+            <div class="filter-row">
+                <label for="category-filter">Category</label>
+                <select id="category-filter" aria-label="Filter by category">
+                    <option value="">All categories</option>
+                </select>
+                <div class="search-bar">
+                    <input type="search" id="search-sounds" placeholder="Search sounds..." aria-label="Search sounds" autocomplete="off">
+                </div>
+            </div>
+        </div>
+        <div id="sound-grid" class="sound-grid" role="list"></div>
+        <p id="browse-empty" class="form-error" hidden>No sounds match your filters.</p>
+    </div>
+    <aside class="browse-list-sidebar" id="browse-list-sidebar" hidden aria-label="Current list">
+        <div class="browse-sidebar-inner">
+            <div class="browse-sidebar-header">
+                <h2 class="browse-sidebar-title" id="browse-sidebar-title">Adding to list</h2>
+                <a href="#" class="browse-sidebar-back" id="browse-sidebar-back" aria-label="Back to list">View list →</a>
+            </div>
+            <div class="browse-sidebar-list" id="browse-sidebar-list"></div>
+            <p class="browse-sidebar-empty" id="browse-sidebar-empty">No sounds in this list yet. Use + on any sound to add.</p>
+        </div>
+    </aside>
+</div>
+
+<!-- Add to list modal (shown only when user clicks + on a sound) -->
+<div id="add-to-list-modal" class="modal-overlay" hidden aria-hidden="true">
+    <div class="modal-content">
+        <h2 class="modal-title">Add to list</h2>
+        <select id="add-to-list-select" class="modal-select" aria-label="Choose a session list"></select>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="add-to-list-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" id="add-to-list-confirm">Add</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/guest_lists.js') }}"></script>
+<script src="{{ url_for('static', filename='js/browse.js') }}"></script>
+{% endblock %}

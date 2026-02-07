@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{% if list_id %}Session List{% else %}Session List{% endif %}{% endblock %}
+{% block content %}
+<div class="session-header">
+    <h1 class="page-title" id="session-title">Session List</h1>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;" id="session-actions"></div>
+</div>
+<div id="session-list-id" data-list-id="{{ list_id or '' }}"></div>
+<div id="session-list-sounds" class="session-list-sounds" role="list"></div>
+<div id="session-empty" class="session-empty" hidden>
+    <p>No sounds in this list yet.</p>
+    <a href="{{ url_for('main_bp.browse') }}" class="btn btn-primary" id="session-empty-add-link">Add sounds</a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/guest_lists.js') }}"></script>
+<script src="{{ url_for('static', filename='js/session.js') }}"></script>
+{% endblock %}

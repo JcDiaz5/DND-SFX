@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>D&D Sound Effects</h1>
+    <p>Browse categories, search sounds, and build a session list of one-tap sound effects for your tabletop games.</p>
+    <div class="hero-actions">
+        <a href="{{ url_for('main_bp.browse') }}" class="btn btn-primary">Browse Sounds</a>
+        <a href="{{ url_for('main_bp.session_index') }}" class="btn btn-ghost">Session List</a>
+    </div>
+</section>
+{% endblock %}

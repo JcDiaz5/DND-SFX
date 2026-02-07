@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Session lists{% endblock %}
+{% block content %}
+<div class="session-index-page">
+    <h1 class="page-title">Session lists</h1>
+    <p class="session-index-intro">Create lists of sounds for your game sessions. Logged-in users save lists permanently; guests can create lists that last until the tab is closed.</p>
+    <div id="session-lists-container" class="session-lists-container">
+        <div id="session-lists-loading" class="session-lists-loading">Loading…</div>
+        <div id="session-lists-list" class="session-lists-list" hidden></div>
+        <div id="session-lists-empty" class="session-empty" hidden>
+            <p>You don't have any session lists yet.</p>
+        </div>
+    </div>
+    <div class="session-index-actions">
+        <a href="{{ url_for('main_bp.session_new') }}" class="btn btn-primary">Create new list</a>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/guest_lists.js') }}"></script>
+<script src="{{ url_for('static', filename='js/session_index.js') }}"></script>
+{% endblock %}
