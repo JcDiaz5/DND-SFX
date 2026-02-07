@@ -23,16 +23,12 @@
         if (emailVerifyError) { emailVerifyError.hidden = true; emailVerifyError.textContent = ''; }
     }
 
-    function openEmailVerifyModal(newEmail, devCode) {
+    function openEmailVerifyModal(newEmail) {
         pendingNewEmail = newEmail;
         pendingFirstName = document.getElementById('first_name').value.trim();
         pendingLastName = document.getElementById('last_name').value.trim();
         if (emailVerifyMessage) {
-            if (devCode) {
-                emailVerifyMessage.textContent = 'Your verification code is: ' + devCode + '. Enter it below.';
-            } else {
-                emailVerifyMessage.textContent = 'Changing your email requires verification. We\'ve sent a 6-digit code to ' + newEmail + '. Enter it below.';
-            }
+            emailVerifyMessage.textContent = 'We\'ve sent a verification code to the email address on your account. Enter it below.';
         }
         if (emailVerifyError) { emailVerifyError.hidden = true; emailVerifyError.textContent = ''; }
         if (emailVerifyCodeInput) { emailVerifyCodeInput.value = ''; emailVerifyCodeInput.focus(); }
@@ -83,11 +79,9 @@
             .then(function(_) {
                 if (_.ok) {
                     if (emailVerifyModal) {
-                        openEmailVerifyModal(email, _.data.dev_code);
+                        openEmailVerifyModal(email);
                     } else {
-                        ok.textContent = _.data.dev_code
-                            ? 'Verification code: ' + _.data.dev_code + ' — enter it in the verification window.'
-                            : 'Verification code sent to ' + email + '. Check your email.';
+                        ok.textContent = 'Verification code sent to the email on your account. Enter it in the verification window.';
                         ok.hidden = false;
                     }
                 } else {

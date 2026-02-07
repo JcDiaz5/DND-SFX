@@ -135,7 +135,7 @@ CODE_EXPIRY_MINUTES = 15
 @auth_bp.route('/auth/profile/request-email-change', methods=['POST'])
 @login_required
 def request_email_change():
-    """Send a verification code to the new email. Email is only updated after confirm-email-change."""
+    """Send a verification code to the account's current (registered) email. Email is only updated after confirm-email-change."""
     data = request.get_json()
     if not data or not data.get('new_email'):
         return jsonify({'error': 'new_email is required'}), 400
@@ -158,30 +158,40 @@ def request_email_change():
     db.session.add(pending)
     db.session.commit()
 
+    # Send code to the account's current (registered) email, not the new one
+    send_to = (current_user.email or '').strip().lower()
+    if not send_to:
+        db.session.delete(pending)
+        db.session.commit()
+        return jsonify({'error': 'Your account has no email on file. Contact support.'}), 400
+
     mail_configured = current_app.config.get('MAIL_SERVER')
 
-    if mail_configured:
-        subject = 'Verify your new email – D&D SFX'
-        body = (
-            'You requested to change your email to this address.\n\n'
-            'Your verification code is: %s\n\n'
-            'Enter this code on your profile page to complete the change. '
-            'The code expires in %d minutes.\n\n'
-            'If you did not request this change, you can ignore this email.'
-        ) % (code, CODE_EXPIRY_MINUTES)
-        if not send_email(new_email, subject, body):
-            db.session.delete(pending)
-            db.session.commit()
-            return jsonify({'error': 'Failed to send verification email. Try again later.'}), 503
+    if not mail_configured:
+        db.session.delete(pending)
+        db.session.commit()
         return jsonify({
-            'message': 'Verification code sent to ' + new_email,
-            'expires_minutes': CODE_EXPIRY_MINUTES,
-        }), 200
-    # No mail server configured: return the code in the response so the user can still test (e.g. local dev)
+            'error': 'Email sending is not configured. Add MAIL_SERVER, MAIL_USERNAME, MAIL_PASSWORD (and optionally MAIL_USE_TLS) to your .env file. See .env.example in the project.',
+        }), 503
+
+    subject = 'Verify your email change – D&D SFX'
+    body = (
+        'You requested to change your email to: %s\n\n'
+        'Your verification code is: %s\n\n'
+        'Enter this code on your profile page to complete the change. '
+        'The code expires in %d minutes.\n\n'
+        'If you did not request this change, secure your account and ignore this email.'
+    ) % (new_email, code, CODE_EXPIRY_MINUTES)
+    sent, err_msg = send_email(send_to, subject, body)
+    if not sent:
+        db.session.delete(pending)
+        db.session.commit()
+        return jsonify({
+            'error': err_msg or 'Failed to send verification email. Try again later.',
+        }), 503
     return jsonify({
-        'message': 'Verification code generated (email not configured). Use the code below.',
+        'message': 'Verification code sent to the email on your account.',
         'expires_minutes': CODE_EXPIRY_MINUTES,
-        'dev_code': code,
     }), 200
 
 
